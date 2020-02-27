@@ -11,4 +11,7 @@ build = "build.rs"
 glean = { path = "../glean" }
 
 [build-dependencies]
+# Need a dependency to glean for the build script
+# We might be able to split that out of the main Glean crate to reduce compile times
+# when build target != host target
 glean = { path = "../glean" }
