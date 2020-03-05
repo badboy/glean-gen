@@ -1,8 +1,8 @@
-#[derive(Debug)]
-pub enum StringMetric {
-    Parent(StringMetricImpl),
-    Child(StringMetricIpc),
+trait StringMetricT: Sync + Send {
+    fn set(&self, value: String);
 }
+
+pub struct StringMetric(Box<dyn StringMetricT>);
 
 #[derive(Debug)]
 pub struct StringMetricImpl;
@@ -28,9 +28,9 @@ impl StringMetric {
     pub fn new() -> Self {
         // At metric instantiation we determine if this is a parent-process metric or not.
         if unsafe {is_parent_proc() } {
-            StringMetric::Parent(StringMetricImpl::new())
+            StringMetric(Box::new(StringMetricImpl::new()))
         } else {
-            StringMetric::Child(StringMetricIpc::new())
+            StringMetric(Box::new(StringMetricIpc::new()))
         }
     }
 
@@ -45,31 +45,34 @@ impl StringMetric {
     /// right branch here, as we don't change `self`'s state after initialization.
     pub fn set<S: Into<String>>(&self, value: S) {
         let value = value.into();
-        match self {
-            StringMetric::Parent(p) => p.set(value),
-            StringMetric::Child(c) => c.set(value),
-        }
+        self.0.set(value)
+    }
+}
+
+impl StringMetricImpl {
+    fn new() -> Self {
+        Self
     }
 }
 
 /// Main process implementation of a string metric.
-impl StringMetricImpl {
-    pub fn new() -> Self {
-        Self
-    }
+impl StringMetricT for StringMetricImpl {
 
-    pub fn set(&self, value: String) {
+    fn set(&self, value: String) {
         println!("Setting string metric to: {:?}", value);
     }
 }
 
-/// IPC implementation of a string metric.
+
 impl StringMetricIpc {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self
     }
+}
 
-    pub fn set(&self, value: String) {
+/// IPC implementation of a string metric.
+impl StringMetricT for StringMetricIpc {
+    fn set(&self, value: String) {
         println!("IPC-sending string metric with value: {:?}", value);
         unsafe {
             let buffer = bincode::serialize(&value).unwrap();
