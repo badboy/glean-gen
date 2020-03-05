@@ -10,7 +10,7 @@ static mut IS_PARENT_PROCESS: AtomicBool = AtomicBool::new(true);
 static mut IPC_SENDER: Option<IpcSender<Command>> = None;
 
 #[no_mangle]
-extern "C" fn is_parent_proc() -> bool {
+fn is_parent_proc() -> bool {
     // safe, it's an atomic
     unsafe {
         IS_PARENT_PROCESS.load(Ordering::SeqCst)
@@ -18,7 +18,7 @@ extern "C" fn is_parent_proc() -> bool {
 }
 
 #[no_mangle]
-extern "C" fn ipc_send_buffer(buffer: Vec<u8>) {
+fn ipc_send_buffer(buffer: Vec<u8>) {
     unsafe {
         match IPC_SENDER {
             Some(ref sender) => sender.send(Command::Bytes(buffer)).unwrap(),
