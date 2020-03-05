@@ -9,6 +9,10 @@ build = "build.rs"
 
 [dependencies]
 glean = { path = "../glean" }
+procspawn = "0.8.4"
+ipc-channel = "0.14.0"
+serde = { version = "1.0.104", features = ["derive"] }
+bincode = "1.2.1"
 
 [build-dependencies]
 # Need a dependency to glean for the build script
